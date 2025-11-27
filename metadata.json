@@ -1,0 +1,5 @@
+{
+  "name": "MEIS Student Data Portal",
+  "description": "Bilingual parent portal for validating student passport and ID information linked to Google Sheets.",
+  "requestFramePermissions": []
+}
