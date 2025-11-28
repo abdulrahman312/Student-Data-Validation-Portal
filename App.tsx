@@ -10,9 +10,11 @@ import {
   Calendar,
   X,
   Edit3,
-  ChevronLeft
+  ChevronLeft,
+  UploadCloud,
+  FileText
 } from 'lucide-react';
-import { Language, Student, EditableStudentData } from './types';
+import { Language, Student, EditableStudentData, FileData } from './types';
 import { TEXT } from './constants';
 import { searchStudent, updateStudent } from './services/api';
 import LanguageToggle from './components/LanguageToggle';
@@ -43,7 +45,9 @@ function App() {
     passportNumber: '',
     passportExpiry: ''
   });
+  const [fileData, setFileData] = useState<FileData | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
+  const [fileError, setFileError] = useState<string | null>(null);
   
   // Track if we are submitting an Edit or a Confirmation in the final step
   const [submissionType, setSubmissionType] = useState<'CORRECT' | 'EDIT'>('CORRECT');
@@ -138,8 +142,40 @@ function App() {
       passportNumber: student.passportNumber,
       passportExpiry: formatDateForInput(student.passportExpiry)
     });
+    setFileData(null); // Reset file
     setFormErrors({});
+    setFileError(null);
     setStage('EDIT');
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFileError(null);
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Check size (5MB = 5 * 1024 * 1024 bytes)
+      if (file.size > 5 * 1024 * 1024) {
+        setFileError(TEXT.err_file_size[lang]);
+        e.target.value = ''; // Reset input
+        setFileData(null);
+        return;
+      }
+
+      // Convert to Base64
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target && typeof event.target.result === 'string') {
+          // result is "data:application/pdf;base64,....."
+          const base64String = event.target.result.split(',')[1];
+          setFileData({
+            base64: base64String,
+            mimeType: file.type,
+            filename: file.name
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const submitEditForm = (e: React.FormEvent) => {
@@ -158,6 +194,14 @@ function App() {
       return;
     }
 
+    if (fileError) return;
+
+    // MANDATORY FILE CHECK
+    if (!fileData) {
+      setFileError(TEXT.err_file_required[lang]);
+      return;
+    }
+
     // Move to Undertaking
     setSubmissionType('EDIT');
     setIsUndertakingChecked(false);
@@ -173,7 +217,8 @@ function App() {
       } else {
         const payload: EditableStudentData = {
           ...editForm,
-          passportExpiry: formatDateForStorage(editForm.passportExpiry)
+          passportExpiry: formatDateForStorage(editForm.passportExpiry),
+          fileData: fileData // Include file if present
         };
         await updateStudent(student.idIqama, 'EDIT', payload);
       }
@@ -364,7 +409,7 @@ function App() {
 
         {/* --- STAGE: EDIT --- */}
         {stage === 'EDIT' && student && (
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden animate-fade-in-up flex flex-col max-h-[80vh]">
+          <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden animate-fade-in-up flex flex-col max-h-[85vh]">
              <div className="bg-amber-100 p-4 border-b border-amber-200 sticky top-0 z-20">
                <div className="flex items-start gap-3">
                  <AlertTriangle className="text-amber-600 shrink-0 mt-1" size={18} />
@@ -452,6 +497,40 @@ function App() {
                    {formErrors.passportExpiry && <p className="text-red-500 text-xs">{TEXT.err_required[lang]}</p>}
                  </div>
 
+                 {/* File Upload (Required) */}
+                 <div className="space-y-2 pt-2 border-t border-gray-100">
+                    <label className="flex items-center gap-2 text-xs font-bold text-indigo-500 uppercase tracking-wider">
+                      <UploadCloud size={16} />
+                      {TEXT.upload_label[lang]}
+                    </label>
+                    <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-colors ${fileError ? 'border-red-300 bg-red-50' : 'border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50'}`}>
+                       <input 
+                          type="file" 
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={handleFileChange}
+                          className="hidden" 
+                          id="file-upload"
+                       />
+                       <label htmlFor="file-upload" className="cursor-pointer block">
+                          {fileData ? (
+                             <div className="flex items-center justify-center gap-2 text-indigo-600 font-medium">
+                               <FileText size={20} />
+                               <span className="truncate max-w-[200px]">{fileData.filename}</span>
+                               <span className="text-xs bg-indigo-200 px-2 py-0.5 rounded-full text-indigo-700">Change</span>
+                             </div>
+                          ) : (
+                             <div className="flex flex-col items-center gap-1 py-2">
+                                <UploadCloud className="text-indigo-400" size={28} />
+                                <span className="text-sm text-indigo-600 font-medium">Tap to upload file</span>
+                                <span className="text-xs text-gray-400">PDF, JPG, PNG (Max 5MB)</span>
+                             </div>
+                          )}
+                       </label>
+                    </div>
+                    {fileError && <p className="text-red-500 text-xs text-center font-bold">{fileError}</p>}
+                    {!fileError && <p className="text-[10px] text-gray-400 text-center">{TEXT.upload_helper[lang]}</p>}
+                 </div>
+
                </form>
              </div>
 
@@ -493,7 +572,7 @@ function App() {
                         // Merge edit form data into student view for visual confirmation
                         arabicName: editForm.arabicName,
                         englishName: editForm.englishName,
-                        birthPlace: editForm.birthPlace, // NEW
+                        birthPlace: editForm.birthPlace,
                         passportNumber: editForm.passportNumber,
                         passportExpiry: formatDateForStorage(editForm.passportExpiry) 
                     } : student}

@@ -6,6 +6,7 @@
 
 // Configuration
 const SHEET_NAME = 'Student DB';
+const DRIVE_FOLDER_ID = '1v2JFmOwKQjUCkXAMuDyXwC1_dBwQBy0_'; // Folder: "Student Passport"
 
 /**
  * Handle GET requests
@@ -22,7 +23,7 @@ function doGet(e) {
 function doPost(e) {
   // Lock to prevent race conditions during updates
   const lock = LockService.getScriptLock();
-  lock.tryLock(10000); // Wait up to 10 seconds
+  lock.tryLock(30000); // Wait up to 30 seconds for uploads
 
   try {
     const payload = JSON.parse(e.postData.contents);
@@ -54,19 +55,6 @@ function doPost(e) {
 
 /**
  * Search for a student by ID/Iqama (Column E, Index 4)
- * New Structure:
- * 0: Student Number
- * 1: Arabic Name
- * 2: English Name
- * 3: Birth Place (NEW)
- * 4: ID/Iqama
- * 5: PassportNumber
- * 6: Father Mobile
- * 7: Mother Mobile
- * 8: School
- * 9: Grade
- * 10: Passport Expired Date (K)
- * 11: Status (L)
  */
 function searchStudent(idIqama) {
   const sheet = getSheet();
@@ -103,7 +91,7 @@ function searchStudent(idIqama) {
 
 /**
  * Handle updates
- * @param {Object} payload { idIqama, type: 'CORRECT' | 'EDIT', data: { ...fields } }
+ * @param {Object} payload { idIqama, type: 'CORRECT' | 'EDIT', data: { ...fields, fileData? } }
  */
 function updateStudentData(payload) {
   const sheet = getSheet();
@@ -137,7 +125,6 @@ function updateStudentData(payload) {
     let hasChanges = false;
     
     // Check and update fields, coloring yellow if changed
-    // We check each update. If updateCellIfChanged returns true, we flag hasChanges.
     
     // B: Arabic Name (Col 2)
     if (updateCellIfChanged(sheet, rowIdx, 2, currentRow[1], newData.arabicName)) hasChanges = true;
@@ -145,16 +132,32 @@ function updateStudentData(payload) {
     // C: English Name (Col 3)
     if (updateCellIfChanged(sheet, rowIdx, 3, currentRow[2], newData.englishName)) hasChanges = true;
 
-    // D: Birth Place (Col 4) - NEW
+    // D: Birth Place (Col 4)
     if (updateCellIfChanged(sheet, rowIdx, 4, currentRow[3], newData.birthPlace)) hasChanges = true;
     
-    // F: Passport (Col 6) - Was E
+    // F: Passport (Col 6)
     if (updateCellIfChanged(sheet, rowIdx, 6, currentRow[5], newData.passportNumber)) hasChanges = true;
     
     // K: Expiry (Col 11) - Index 10
     if (updateCellIfChanged(sheet, rowIdx, 11, currentRow[10], newData.passportExpiry)) hasChanges = true;
+
+    // HANDLE FILE UPLOAD (Only if provided)
+    if (newData.fileData && newData.fileData.base64) {
+      try {
+        const studentNumber = String(currentRow[0]); // Col A
+        const fileLink = uploadFileToDrive(newData.fileData, studentNumber);
+        if (fileLink) {
+          // Save link to Column M (Index 13)
+          sheet.getRange(rowIdx, 13).setValue(fileLink);
+          hasChanges = true; // Treating file upload as a change
+        }
+      } catch (e) {
+        // Log error but don't fail the whole transaction if file upload fails
+        // console.error("File upload failed", e);
+      }
+    }
     
-    // Decide status: 'Edit' if data changed, otherwise 'Done' (treated as confirmation)
+    // Decide status: 'Edit' if data changed, otherwise 'Done'
     const finalStatus = hasChanges ? 'Edit' : 'Done';
     sheet.getRange(rowIdx, 12).setValue(finalStatus);
   }
@@ -164,9 +167,6 @@ function updateStudentData(payload) {
 
 function updateCellIfChanged(sheet, rowIndex, colIndex, oldValue, newValue) {
   let normOld = "";
-  
-  // Handle Date objects specifically for comparison
-  // If oldValue is a Date object (from Sheet), format it to DD-MM-YYYY string
   if (Object.prototype.toString.call(oldValue) === '[object Date]') {
      normOld = formatDate(oldValue);
   } else {
@@ -175,7 +175,6 @@ function updateCellIfChanged(sheet, rowIndex, colIndex, oldValue, newValue) {
   
   const normNew = String(newValue || "").trim();
   
-  // Compare strings
   if (normOld !== normNew) {
     const cell = sheet.getRange(rowIndex, colIndex);
     cell.setValue(newValue);
@@ -185,16 +184,37 @@ function updateCellIfChanged(sheet, rowIndex, colIndex, oldValue, newValue) {
   return false; // No change
 }
 
+function uploadFileToDrive(fileData, studentNumber) {
+  if (!DRIVE_FOLDER_ID) return null;
+
+  const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+  const data = Utilities.base64Decode(fileData.base64);
+  const blob = Utilities.newBlob(data, fileData.mimeType, fileData.filename);
+  
+  // Create file
+  const file = folder.createFile(blob);
+  
+  // Rename: StudentNumber.extension (e.g. 1001.pdf)
+  const ext = fileData.filename.split('.').pop();
+  const newName = `${studentNumber}.${ext}`;
+  file.setName(newName);
+  
+  // Set Permissions: Anyone with link can view
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  
+  // Return URL
+  return file.getUrl();
+}
+
 function formatDate(dateObj) {
   if (!dateObj) return "";
   if (typeof dateObj === 'string') return dateObj;
-  // Convert JS Date to DD-MM-YYYY
   try {
     const d = new Date(dateObj);
     const day = ("0" + d.getDate()).slice(-2);
     const month = ("0" + (d.getMonth() + 1)).slice(-2);
     const year = d.getFullYear();
-    // Return Day-Month-Year
+    // Return DD-MM-YYYY
     return `${day}-${month}-${year}`;
   } catch (e) {
     return String(dateObj);

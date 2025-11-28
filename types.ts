@@ -7,7 +7,7 @@ export interface Student {
   studentNumber: string;    // Col A
   arabicName: string;       // Col B
   englishName: string;      // Col C
-  birthPlace: string;       // Col D (NEW)
+  birthPlace: string;       // Col D
   idIqama: string;          // Col E
   passportNumber: string;   // Col F
   fatherMobile: string;     // Col G
@@ -19,13 +19,21 @@ export interface Student {
   status: StudentStatus;    // Col L
 }
 
+// File upload data structure
+export interface FileData {
+  base64: string;
+  mimeType: string;
+  filename: string;
+}
+
 // Editable fields for the UI
 export interface EditableStudentData {
   arabicName: string;
   englishName: string;
-  birthPlace: string; // NEW
+  birthPlace: string;
   passportNumber: string;
   passportExpiry: string; // Format YYYY-MM-DD for input type="date"
+  fileData?: FileData | null; // Optional file upload
 }
 
 export type AppStep = 

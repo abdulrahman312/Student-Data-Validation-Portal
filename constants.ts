@@ -35,8 +35,8 @@ export const TEXT = {
     ar: "مهم"
   },
   modal_warning_body: {
-    en: "Please make sure you have your child’s passport with you. You must verify all information against the passport. After you confirm and submit, the information will be used on official report cards and cannot be changed.",
-    ar: "يرجى التأكد من توفر جواز سفر طفلك معك. يجب عليك التحقق من جميع المعلومات من جواز السفر. بعد التأكيد والإرسال، ستُستخدم هذه المعلومات في الشهادات الرسمية ولا يمكن تغييرها."
+    en: "Please make sure you have your child’s passport with you. You must verify all information against the passport. If you need to make any changes, you will be required to upload a clear copy of the passport. After you confirm and submit, the information will be used on official report cards and cannot be changed.",
+    ar: "يرجى التأكد من توفر جواز سفر طفلك معك. يجب عليك التحقق من جميع المعلومات من جواز السفر. إذا كنت بحاجة إلى إجراء أي تغييرات، سيُطلب منك تحميل نسخة واضحة من جواز السفر. بعد التأكيد والإرسال، ستُستخدم هذه المعلومات في الشهادات الرسمية ولا يمكن تغييرها."
   },
   btn_proceed: {
     en: "I have the passport – Proceed",
@@ -121,5 +121,21 @@ export const TEXT = {
   back_home: {
     en: "Back to Home",
     ar: "العودة إلى الصفحة الرئيسية"
+  },
+  upload_label: {
+    en: "Upload Passport Copy (Latest Copy)*",
+    ar: "تحميل نسخة من جواز السفر (أحدث نسخة)*"
+  },
+  upload_helper: {
+    en: "Please ensure the image/PDF is clear. Max size: 5MB.",
+    ar: "يرجى التأكد من أن الصورة أو ملف PDF واضح. الحد الأقصى للحجم: 5 ميجابايت."
+  },
+  err_file_size: {
+    en: "File size exceeds 5MB.",
+    ar: "حجم الملف يتجاوز 5 ميجابايت."
+  },
+  err_file_required: {
+    en: "Passport copy is required to save changes.",
+    ar: "نسخة جواز السفر مطلوبة لحفظ التغييرات."
   }
 };

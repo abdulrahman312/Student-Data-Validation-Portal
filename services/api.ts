@@ -6,7 +6,6 @@ import { Student, EditableStudentData } from '../types';
 // ==============================================================================
 // 1. Deploy your Google Apps Script as a Web App (Execute as: Me, Access: Anyone).
 // 2. Paste the URL inside the quotes below.
-// Example: "https://script.google.com/macros/s/AKfycbx.../exec"
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAr8nxAnthNISiYz48X1n1c8b4UjFJYq3h0Pb2fzwaQLzrg3P25xH8OpUhOgQwEJj1/exec" as string; 
 // ==============================================================================
 
