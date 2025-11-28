@@ -9,7 +9,8 @@ import {
   Loader2,
   Calendar,
   X,
-  Edit3
+  Edit3,
+  ChevronLeft
 } from 'lucide-react';
 import { Language, Student, EditableStudentData } from './types';
 import { TEXT } from './constants';
@@ -195,17 +196,21 @@ function App() {
   );
 
   const renderHeader = () => (
-    <header className="sticky top-0 z-50 w-full px-4 py-3 bg-white/10 backdrop-blur-lg border-b border-white/20 shadow-sm flex justify-between items-center transition-all duration-300">
-      <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-50 w-full px-4 py-4 bg-white/10 backdrop-blur-lg border-b border-white/20 shadow-sm relative flex items-center justify-center min-h-[90px] transition-all duration-300">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2">
          {stage !== 'LOGIN' && (
-           <button onClick={() => { setStudent(null); setStage('LOGIN'); }} className="p-2 text-white hover:bg-white/20 rounded-full transition-colors">
-             <Search size={20} />
+           <button 
+            onClick={() => { setStudent(null); setStage('LOGIN'); }} 
+            className="p-3 text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors shadow-sm backdrop-blur-md"
+            aria-label="Back"
+           >
+             <ChevronLeft size={24} className={isRTL ? "rotate-180" : ""} />
            </button>
          )}
       </div>
-      <div className="flex items-center gap-4">
-        <LanguageToggle currentLang={lang} onToggle={handleSetLang} />
-      </div>
+      
+      {/* Centered Toggle */}
+      <LanguageToggle currentLang={lang} onToggle={handleSetLang} />
     </header>
   );
 
@@ -222,7 +227,7 @@ function App() {
              
              {/* Branding Section */}
              <div className="mb-8 flex flex-col items-center justify-center">
-               <div className="h-24 w-24 bg-white rounded-full flex items-center justify-center shadow-lg p-2 mb-4">
+               <div className="h-28 w-28 bg-white rounded-full flex items-center justify-center shadow-lg p-3 mb-4">
                  <img src="https://i.ibb.co/bgFrgXkW/meis.png" alt="MEIS Logo" className="h-full w-full object-contain" />
                </div>
                <h2 className="text-xl font-bold text-gray-800 font-serif leading-tight px-4">
@@ -323,8 +328,8 @@ function App() {
 
             <StudentCard student={student} lang={lang} />
 
-            {/* Actions */}
-            <div className="flex flex-col gap-4 mt-6 sticky bottom-4 z-10 pb-4">
+            {/* Actions - Removed Sticky to fix mobile overlap */}
+            <div className="flex flex-col gap-4 mt-8 pb-8">
                {isMissingData() && student.status === 'Pending' && (
                  <div className="text-red-500 text-xs text-center font-bold bg-white/80 p-2 rounded-lg backdrop-blur shadow-sm">
                    {TEXT.edit_banner[lang]}
@@ -350,7 +355,7 @@ function App() {
                  </button>
                )}
                
-               <button onClick={() => setStage('LOGIN')} className="text-white/80 text-sm font-medium hover:underline mt-2 shadow-black drop-shadow-md">
+               <button onClick={() => setStage('LOGIN')} className="text-white/80 text-sm font-medium hover:underline mt-2 shadow-black drop-shadow-md text-center">
                  {TEXT.back_home[lang]}
                </button>
             </div>
