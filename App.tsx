@@ -12,7 +12,8 @@ import {
   Edit3,
   ChevronLeft,
   UploadCloud,
-  FileText
+  FileText,
+  UserPlus
 } from 'lucide-react';
 import { Language, Student, EditableStudentData, FileData } from './types';
 import { TEXT } from './constants';
@@ -506,7 +507,7 @@ function App() {
                     <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-colors ${fileError ? 'border-red-300 bg-red-50' : 'border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50'}`}>
                        <input 
                           type="file" 
-                          accept=".pdf,.jpg,.jpeg,.png"
+                          accept="image/*,application/pdf"
                           onChange={handleFileChange}
                           className="hidden" 
                           id="file-upload"
@@ -632,16 +633,32 @@ function App() {
             </div>
             <h2 className="text-3xl font-bold text-white mb-4 drop-shadow-md">{TEXT.success_msg[lang]}</h2>
             
-            <button 
-              onClick={() => {
-                 setStudent(null);
-                 setSearchId('');
-                 setStage('LOGIN');
-              }}
-              className="mt-12 bg-white text-indigo-600 px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-50 transition-colors"
-            >
-              {TEXT.back_home[lang]}
-            </button>
+            <div className="flex flex-col gap-3 mt-12 px-4">
+              {/* Validate Another Child Button */}
+              <button
+                onClick={() => {
+                  setStudent(null);
+                  setSearchId('');
+                  setStage('LOGIN');
+                }}
+                className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <UserPlus size={20} />
+                {TEXT.btn_another_child[lang]}
+              </button>
+
+              {/* Back to Home Button */}
+              <button 
+                onClick={() => {
+                   setStudent(null);
+                   setSearchId('');
+                   setStage('LOGIN');
+                }}
+                className="bg-white text-indigo-600 px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-gray-50 transition-colors"
+              >
+                {TEXT.back_home[lang]}
+              </button>
+            </div>
           </div>
         )}
 

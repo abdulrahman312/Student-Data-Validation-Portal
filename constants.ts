@@ -122,6 +122,10 @@ export const TEXT = {
     en: "Back to Home",
     ar: "العودة إلى الصفحة الرئيسية"
   },
+  btn_another_child: {
+    en: "Validate Another Child",
+    ar: "التحقق من طالب آخر"
+  },
   upload_label: {
     en: "Upload Passport Copy (Latest Copy)*",
     ar: "تحميل نسخة من جواز السفر (أحدث نسخة)*"
