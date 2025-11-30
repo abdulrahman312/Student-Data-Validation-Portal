@@ -54,9 +54,21 @@ export const TEXT = {
     en: "English Name",
     ar: "الاسم بالإنجليزية"
   },
+  field_birth_date: {
+    en: "Date of Birth (DD-MM-YYYY)",
+    ar: "تاريخ الميلاد (يوم-شهر-سنة)"
+  },
   field_birth_place: {
     en: "Place of Birth",
     ar: "مكان الميلاد"
+  },
+  field_religion: {
+    en: "Religion",
+    ar: "الديانة"
+  },
+  field_nationality: {
+    en: "Nationality",
+    ar: "الجنسية"
   },
   field_id: {
     en: "ID/Iqama",
@@ -114,6 +126,10 @@ export const TEXT = {
     en: "Expiry date cannot be in the past",
     ar: "لا يمكن أن يكون تاريخ الانتهاء في الماضي"
   },
+  err_expired_msg: {
+    en: "Passport is expired. You must update the information.",
+    ar: "جواز السفر منتهي الصلاحية. يجب عليك تحديث المعلومات."
+  },
   loading: {
     en: "Loading...",
     ar: "جاري التحميل..."
@@ -130,6 +146,10 @@ export const TEXT = {
     en: "Upload Passport Copy (Latest Copy)*",
     ar: "تحميل نسخة من جواز السفر (أحدث نسخة)*"
   },
+  upload_label_2: {
+    en: "Second Page (Optional)",
+    ar: "الصفحة الثانية (اختياري)"
+  },
   upload_helper: {
     en: "Please ensure the image/PDF is clear. Max size: 5MB.",
     ar: "يرجى التأكد من أن الصورة أو ملف PDF واضح. الحد الأقصى للحجم: 5 ميجابايت."
@@ -141,5 +161,10 @@ export const TEXT = {
   err_file_required: {
     en: "Passport copy is required to save changes.",
     ar: "نسخة جواز السفر مطلوبة لحفظ التغييرات."
+  },
+  religion_opts: {
+    muslim: { en: "Muslim", ar: "مسلم" },
+    christian: { en: "Christian", ar: "مسيحي" },
+    others: { en: "Others", ar: "غير ذلك" }
   }
 };

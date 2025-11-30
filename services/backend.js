@@ -10,7 +10,6 @@ const DRIVE_FOLDER_ID = '1v2JFmOwKQjUCkXAMuDyXwC1_dBwQBy0_'; // Folder: "Student
 
 /**
  * Handle GET requests
- * Used to check if the service is running.
  */
 function doGet(e) {
   return HtmlService.createHtmlOutput("MEIS Backend Service is running. Use POST requests for data.");
@@ -18,12 +17,10 @@ function doGet(e) {
 
 /**
  * Handle POST requests (JSON API)
- * This allows external apps (React/Mobile) to communicate with the Sheet.
  */
 function doPost(e) {
-  // Lock to prevent race conditions during updates
   const lock = LockService.getScriptLock();
-  lock.tryLock(30000); // Wait up to 30 seconds for uploads
+  lock.tryLock(30000); 
 
   try {
     const payload = JSON.parse(e.postData.contents);
@@ -38,7 +35,6 @@ function doPost(e) {
       throw new Error("Invalid action provided");
     }
 
-    // Return JSON response
     return ContentService.createTextOutput(JSON.stringify(result || { error: "Not found" }))
       .setMimeType(ContentService.MimeType.JSON);
 
@@ -54,35 +50,45 @@ function doPost(e) {
 }
 
 /**
- * Search for a student by ID/Iqama (Column E, Index 4)
+ * Search for a student by ID/Iqama
+ * MAPPING ASSUMPTION:
+ * A(0): Student No
+ * B(1): Arabic Name
+ * C(2): English Name
+ * D(3): Birth Date
+ * E(4): Birth Place
+ * F(5): Religion
+ * G(6): ID/Iqama (Search Key)
+ * H(7): Nationality
+ * I(8): Passport No
+ * ...
+ * N(13): Expiry
+ * O(14): Status
+ * P(15): File Link
  */
 function searchStudent(idIqama) {
   const sheet = getSheet();
   const data = sheet.getDataRange().getValues();
-  // Headers are row 0, data starts row 1
   
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    // Convert both to string to ensure match
-    // Checking Index 4 (Column E) for ID/Iqama
-    if (String(row[4]).trim() === String(idIqama).trim()) {
+    // Check Index 6 (Column G) for ID
+    if (String(row[6]).trim() === String(idIqama).trim()) {
       return {
         found: true,
-        rowIndex: i + 1, // 1-based index for Sheet operations
-        studentNumber: String(row[0]),
-        arabicName: String(row[1]),
-        englishName: String(row[2]),
-        birthPlace: String(row[3]), // Col D
-        idIqama: String(row[4]),    // Col E
-        passportNumber: String(row[5]), // Col F
-        fatherMobile: String(row[6]),
-        motherMobile: String(row[7]),
-        school: String(row[8]),
-        grade: String(row[9]),
-        // Index 10 is Col K (Expiry)
-        passportExpiry: row[10] ? formatDate(row[10]) : "",
-        // Index 11 is Col L (Status)
-        status: String(row[11] || "Pending")
+        rowIndex: i + 1,
+        studentNumber: String(row[0]),     // A
+        arabicName: String(row[1]),        // B
+        englishName: String(row[2]),       // C
+        birthDate: row[3] ? formatDate(row[3]) : "", // D
+        birthPlace: String(row[4]),        // E
+        religion: String(row[5]),          // F
+        idIqama: String(row[6]),           // G
+        nationality: String(row[7]),       // H
+        passportNumber: String(row[8]),    // I
+        
+        passportExpiry: row[13] ? formatDate(row[13]) : "", // N (Index 13)
+        status: String(row[14] || "Pending") // O (Index 14)
       };
     }
   }
@@ -91,7 +97,6 @@ function searchStudent(idIqama) {
 
 /**
  * Handle updates
- * @param {Object} payload { idIqama, type: 'CORRECT' | 'EDIT', data: { ...fields, fileData? } }
  */
 function updateStudentData(payload) {
   const sheet = getSheet();
@@ -99,9 +104,9 @@ function updateStudentData(payload) {
   let rowIdx = -1;
   let currentRow = null;
 
-  // Find the row again for security (Index 4 is ID)
+  // Find row by ID (Index 6 / Col G)
   for (let i = 1; i < data.length; i++) {
-    if (String(data[i][4]).trim() === String(payload.idIqama).trim()) {
+    if (String(data[i][6]).trim() === String(payload.idIqama).trim()) {
       rowIdx = i + 1;
       currentRow = data[i];
       break;
@@ -110,56 +115,58 @@ function updateStudentData(payload) {
 
   if (rowIdx === -1) throw new Error("Student not found");
   
-  // Check current status - Security check (Index 11 is Status Col L)
-  const currentStatus = String(currentRow[11] || "Pending");
+  // Status check (Index 14 / Col O)
+  const currentStatus = String(currentRow[14] || "Pending");
   if (currentStatus === 'Done' || currentStatus === 'Edit') {
      throw new Error("Record already locked.");
   }
 
   if (payload.type === 'CORRECT') {
-    // Just update Status to Done (Col 12/L)
-    sheet.getRange(rowIdx, 12).setValue('Done'); 
+    // Update Status to Done (Col O / 15)
+    sheet.getRange(rowIdx, 15).setValue('Done'); 
   } 
   else if (payload.type === 'EDIT') {
     const newData = payload.data;
     let hasChanges = false;
     
-    // Check and update fields, coloring yellow if changed
+    // Update fields and color if changed
     
-    // B: Arabic Name (Col 2)
+    // B: Arabic Name (2)
     if (updateCellIfChanged(sheet, rowIdx, 2, currentRow[1], newData.arabicName)) hasChanges = true;
-    
-    // C: English Name (Col 3)
+    // C: English Name (3)
     if (updateCellIfChanged(sheet, rowIdx, 3, currentRow[2], newData.englishName)) hasChanges = true;
+    // D: Birth Date (4)
+    if (updateCellIfChanged(sheet, rowIdx, 4, currentRow[3], newData.birthDate)) hasChanges = true;
+    // E: Birth Place (5)
+    if (updateCellIfChanged(sheet, rowIdx, 5, currentRow[4], newData.birthPlace)) hasChanges = true;
+    // F: Religion (6)
+    if (updateCellIfChanged(sheet, rowIdx, 6, currentRow[5], newData.religion)) hasChanges = true;
+    // H: Nationality (8) - Note: G is ID (7), H is 8
+    if (updateCellIfChanged(sheet, rowIdx, 8, currentRow[7], newData.nationality)) hasChanges = true;
+    // I: Passport No (9)
+    if (updateCellIfChanged(sheet, rowIdx, 9, currentRow[8], newData.passportNumber)) hasChanges = true;
+    // N: Expiry (14) - Column 14 is N
+    if (updateCellIfChanged(sheet, rowIdx, 14, currentRow[13], newData.passportExpiry)) hasChanges = true;
 
-    // D: Birth Place (Col 4)
-    if (updateCellIfChanged(sheet, rowIdx, 4, currentRow[3], newData.birthPlace)) hasChanges = true;
-    
-    // F: Passport (Col 6)
-    if (updateCellIfChanged(sheet, rowIdx, 6, currentRow[5], newData.passportNumber)) hasChanges = true;
-    
-    // K: Expiry (Col 11) - Index 10
-    if (updateCellIfChanged(sheet, rowIdx, 11, currentRow[10], newData.passportExpiry)) hasChanges = true;
-
-    // HANDLE FILE UPLOAD (Only if provided)
+    // FILE UPLOAD
     if (newData.fileData && newData.fileData.base64) {
       try {
         const studentNumber = String(currentRow[0]); // Col A
         const fileLink = uploadFileToDrive(newData.fileData, studentNumber);
         if (fileLink) {
-          // Save link to Column M (Index 13)
-          sheet.getRange(rowIdx, 13).setValue(fileLink);
-          hasChanges = true; // Treating file upload as a change
+          // Save link to Column P (Index 16)
+          sheet.getRange(rowIdx, 16).setValue(fileLink);
+          hasChanges = true;
         }
       } catch (e) {
-        // Log error but don't fail the whole transaction if file upload fails
         // console.error("File upload failed", e);
       }
     }
     
-    // Decide status: 'Edit' if data changed, otherwise 'Done'
+    // If no data changed but submitted edit, mark as Done (as requested previously)
+    // If data changed, mark as Edit
     const finalStatus = hasChanges ? 'Edit' : 'Done';
-    sheet.getRange(rowIdx, 12).setValue(finalStatus);
+    sheet.getRange(rowIdx, 15).setValue(finalStatus);
   }
 
   return { success: true };
@@ -179,9 +186,9 @@ function updateCellIfChanged(sheet, rowIndex, colIndex, oldValue, newValue) {
     const cell = sheet.getRange(rowIndex, colIndex);
     cell.setValue(newValue);
     cell.setBackground('#FFFF00'); // Yellow
-    return true; // Change detected
+    return true;
   }
-  return false; // No change
+  return false;
 }
 
 function uploadFileToDrive(fileData, studentNumber) {
@@ -191,18 +198,15 @@ function uploadFileToDrive(fileData, studentNumber) {
   const data = Utilities.base64Decode(fileData.base64);
   const blob = Utilities.newBlob(data, fileData.mimeType, fileData.filename);
   
-  // Create file
   const file = folder.createFile(blob);
   
-  // Rename: StudentNumber.extension (e.g. 1001.pdf)
+  // Rename: StudentNumber.pdf (Assuming PDF merge always results in PDF)
+  // If we merge images on client, we send PDF. If we send single image, we keep extension.
   const ext = fileData.filename.split('.').pop();
   const newName = `${studentNumber}.${ext}`;
   file.setName(newName);
   
-  // Set Permissions: Anyone with link can view
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  
-  // Return URL
   return file.getUrl();
 }
 

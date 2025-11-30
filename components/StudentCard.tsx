@@ -2,7 +2,7 @@
 import React from 'react';
 import { Student, Language } from '../types';
 import { TEXT } from '../constants';
-import { AlertCircle, User, CreditCard, Calendar, Hash, MapPin } from 'lucide-react';
+import { AlertCircle, User, CreditCard, Calendar, Hash, MapPin, Globe, BookOpen, Clock } from 'lucide-react';
 
 interface Props {
   student: Student;
@@ -53,7 +53,10 @@ export const StudentCard: React.FC<Props> = ({ student, lang }) => {
       <div className="p-4 space-y-1">
         {renderRow(<User />, TEXT.field_arabic_name[lang], student.arabicName)}
         {renderRow(<User />, TEXT.field_english_name[lang], student.englishName)}
+        {renderRow(<Clock />, TEXT.field_birth_date[lang], student.birthDate)}
         {renderRow(<MapPin />, TEXT.field_birth_place[lang], student.birthPlace)}
+        {renderRow(<BookOpen />, TEXT.field_religion[lang], student.religion)}
+        {renderRow(<Globe />, TEXT.field_nationality[lang], student.nationality)}
         {renderRow(<Hash />, TEXT.field_id[lang], student.idIqama)}
         {renderRow(<CreditCard />, TEXT.field_passport[lang], student.passportNumber)}
         {renderRow(<Calendar />, TEXT.field_expiry[lang], student.passportExpiry)}
