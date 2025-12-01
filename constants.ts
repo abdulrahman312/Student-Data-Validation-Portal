@@ -79,8 +79,8 @@ export const TEXT = {
     ar: "رقم جواز السفر"
   },
   field_expiry: {
-    en: "Passport Expiry Date (DD-MM-YYYY)",
-    ar: "تاريخ انتهاء جواز السفر (يوم-شهر-سنة)"
+    en: "Passport Expiry Date",
+    ar: "تاريخ انتهاء جواز السفر"
   },
   status_locked: {
     en: "You have already reviewed this information. Further changes are not allowed.",
